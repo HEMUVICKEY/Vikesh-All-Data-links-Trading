@@ -718,7 +718,7 @@ body.admin-page .nav-view-admin{display:none!important}
     <button class="btn bp" onclick="doLogin()" style="width:100%;margin-top:4px;padding:13px">Sign In →</button>
     <div class="login-divider"></div>
     <button class="btn bds" onclick="closeLscr()" style="width:100%;padding:11px">Cancel</button>
-    <div class="login-hint">Default password: <strong>vikesh2024</strong> — change in Settings</div>
+    <div class="login-hint">Default password: <strong>Hemuvickey@8333</strong> — change in Settings</div>
   </div>
 </div>
 
@@ -749,12 +749,6 @@ body.admin-page .nav-view-admin{display:none!important}
     <button class="nb" id="adminBtn" onclick="onAdminClick()">🛡️ Admin</button>
   </div>
 </nav>
-
-<!-- VIEWER MODE BANNER (shown only on viewer page) -->
-<div class="viewer-banner">
-  <span class="vb-txt">👁️ You are viewing the public page</span>
-  <a class="vb-link" id="vbLink" href="?admin=1">🛡️ Go to Admin Dashboard →</a>
-</div>
 
 <!-- HERO -->
 <section class="hero">
@@ -1332,7 +1326,7 @@ const DEF={
   note:{title:'📌 Note',text:'',visible:false},
   announce:{title:'',text:'',visible:false,waLink:''},
   analytics:{visitors:0,clicks:0},
-  settings:{theme:'dark',accent:'#7c5cfc',grad:'purple',adminPw:'vikesh2024'}
+  settings:{theme:'dark',accent:'#7c5cfc',grad:'purple',adminPw:'Hemuvickey@8333'}
 };
 
 // ═══════════════ STATE ═══════════════
@@ -2616,7 +2610,34 @@ async function resetAll(){
 // ═══════════════ BOOT ═══════════════
 // Initialize Firebase and wire up auth state observer.
 // Page mode is decided by URL: default = viewer page, ?admin=1 = admin page.
+// On REFRESH of ?admin=1, we strip the param so users return to the viewer page
+// (admin is for active editing sessions, not for bookmarking/autocompleting).
 (async()=>{
+  // ── Detect refresh vs. fresh navigation ──
+  // If the user refreshed while on ?admin=1, redirect to the viewer page.
+  let isRefresh=false;
+  try{
+    const navEntries=performance.getEntriesByType('navigation');
+    if(navEntries&&navEntries[0]){
+      isRefresh=navEntries[0].type==='reload';
+    }else if(typeof performance.navigation!=='undefined'){
+      // Deprecated fallback for older browsers (1 = reload)
+      isRefresh=performance.navigation.type===1;
+    }
+  }catch(e){/* if detection fails, treat as fresh navigation (safer) */}
+
+  if(isRefresh){
+    const url=new URL(location.href);
+    const hadAdmin=url.searchParams.get('admin')==='1'||url.searchParams.get('mode')==='admin';
+    if(hadAdmin){
+      url.searchParams.delete('admin');
+      url.searchParams.delete('mode');
+      // Replace the URL in-place (no extra page load) so the rest of the
+      // boot logic sees a clean viewer URL.
+      try{history.replaceState({},'',url.toString());}catch(e){}
+    }
+  }
+
   // Detect page mode ASAP and apply body class (so correct elements are hidden)
   detectPageMode();
 
